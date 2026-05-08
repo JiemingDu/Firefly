@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Flight logs
+logs/
+
+# Test / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+Session.vim
+
+# ArduPilot / SITL artifacts
+*.bin
+*.tlog
+*.tlog.raw
+eeprom.bin
+mav.parm
+
+# Environment variables
+.env
+
+# NumPy / data artifacts
+*.npy
+*.npz
