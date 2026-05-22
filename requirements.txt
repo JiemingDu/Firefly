@@ -1,9 +1,16 @@
 # Autonomous Drone Navigation — Phase 1
 # Python 3.11+
-# Install: pip install -r requirements.txt
+#
+# Setup:
+#   python3.11 -m venv .venv
+#   source .venv/bin/activate
+#   pip install -r requirements.txt
+#
+# Note: dronekit is pinned with pymavlink==2.4.40 for compatibility.
+# Newer pymavlink versions break dronekit's MAVLink message parsing.
 
 # Flight controller communication
-pymavlink==2.4.41
+pymavlink==2.4.40
 dronekit==2.9.2
 
 # Numerics / occupancy map

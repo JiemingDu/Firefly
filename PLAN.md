@@ -328,13 +328,21 @@ nav.run(goal=(5.0, 0.0, 1.5))   # fly 5m forward at 1.5m altitude
 
 ### `scripts/run_sitl.sh` — SITL Launcher
 
+ArduPilot is installed natively at `~/Development/ArduPilot` (compiled for ARM64,
+no Docker). `sim_vehicle.py` is on PATH after sourcing the shell environment set
+up by `Tools/environment_install/install-prereqs-mac.sh`.
+
+MAVProxy binds `tcp:127.0.0.1:5760` by default — DroneKit connects there directly.
+Do not pass `--out=tcp:0.0.0.0:5760`; that would open a second output port and is
+not needed.
+
 ```bash
 #!/bin/bash
-docker run -it --rm \
-  --network host \
-  ardupilot/ardupilot-dev \
-  sim_vehicle.py -v ArduCopter --console --map \
-  --out=tcp:0.0.0.0:5760
+# Launches ArduCopter SITL with console and map windows.
+# Wait for "EKF3 IMU0 is using GPS" before running fly_mission.py.
+# Note: installed build is ArduCopter V4.8.0-dev using EKF3 (not EKF2).
+cd ~/Development/ArduPilot
+sim_vehicle.py -v ArduCopter --console --map
 ```
 
 ---
@@ -382,20 +390,63 @@ obstacles placed in the SITL environment and reach the goal position.
 
 ## Environment Setup
 
+### One-time: Install ArduPilot SITL (native, Apple Silicon)
+
 ```bash
-# 1. Clone repo and set up venv
+# 1. Clone ArduPilot with submodules (~5 min)
+git clone https://github.com/ArduPilot/ardupilot.git ~/Development/ArduPilot
+cd ~/Development/ArduPilot
+git submodule update --init --recursive
+
+# 2. Run the prereqs script (expect brew formula failures — see notes below)
+Tools/environment_install/install-prereqs-mac.sh
+source ~/.zshrc
+
+# If the ARM toolchain fails to install via tap:
+#   brew untap ardupilot/px4
+#   brew install --cask gcc-arm-embedded
+# Then re-run the script.
+
+# 3. Build the SITL binary (~5–10 min first time)
+./waf configure --board sitl
+./waf copter
+```
+
+### Per-session: Project venv + SITL
+
+```bash
+# 1. Activate project venv
+cd /path/to/Firefly
+source .venv/bin/activate
+
+# If venv doesn't exist yet:
 python3.11 -m venv .venv
 source .venv/bin/activate
-pip install dronekit pymavlink numpy
+pip install -r requirements.txt
 
-# 2. Start SITL
-chmod +x scripts/run_sitl.sh
+# 2. Start SITL in a separate terminal
 ./scripts/run_sitl.sh
-# Wait for "APM: EKF2 IMU0 is using GPS" before connecting
+# Wait for: "EKF3 IMU0 is using GPS"
+# (Build is V4.8.0-dev — uses EKF3, not EKF2)
 
 # 3. Run mission
 python scripts/fly_mission.py
+
+# 4. Run tests (unit tests only — no SITL needed)
+pytest tests/ -k "not sitl"
+
+# 5. Run integration test (SITL must be running)
+pytest tests/test_navigator_sitl.py
 ```
+
+### Notes
+
+- ArduPilot is installed at `~/Development/ArduPilot`, compiled natively for ARM64.
+  No Docker required.
+- `sim_vehicle.py` is on PATH after sourcing `~/.zshrc` post-install.
+- MAVProxy listens on `tcp:127.0.0.1:5760` by default. DroneKit connects there.
+- `pymavlink` is pinned to `2.4.40` — newer versions break DroneKit's message parsing.
+- Never `pip install` outside the `.venv`. macOS will reject it with a PEP 668 error.
 
 ---
 
@@ -428,7 +479,9 @@ If you find yourself importing cflib, open3d, or torch, stop — you're in the w
 
 - Always run `source .venv/bin/activate` before any Python command
 - SITL must be running before any integration test or `fly_mission.py`
-- If DroneKit connect times out, check that Docker container is up with `docker ps`
+- SITL is native (no Docker) — launch with `./scripts/run_sitl.sh`, not `docker ps`
+- Ready signal is `EKF3 IMU0 is using GPS` (build is V4.8.0-dev, uses EKF3)
+- DroneKit connects to `tcp:127.0.0.1:5760` (MAVProxy default, no extra --out flag needed)
 - All paths in code are relative to the repo root
 - Log files go in `logs/` (gitignored)
 - Never commit `.venv/`, `logs/`, or `__pycache__/`

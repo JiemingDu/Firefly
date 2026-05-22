@@ -55,25 +55,29 @@ If a feature isn't in the Phase 1 module list above, don't build it.
 
 ## Dev Environment
 
+macOS Apple Silicon. Python 3.11. Editor: Neovim.
+ArduPilot installed natively at `~/Development/ArduPilot` (ARM64, no Docker).
+
 ```bash
 # Activate venv (always do this first)
 source .venv/bin/activate
 
-# Install dependencies
-pip install dronekit pymavlink numpy
+# Install dependencies (use requirements.txt — pymavlink is pinned for dronekit compat)
+pip install -r requirements.txt
 
-# Start SITL (Docker must be running)
+# Start SITL in a separate terminal
 ./scripts/run_sitl.sh
-# Wait for: "APM: EKF2 IMU0 is using GPS" before connecting
+# Wait for: "EKF3 IMU0 is using GPS"  ← EKF3, not EKF2 (V4.8.0-dev build)
 
-# Run mission
+# Run mission (SITL must be running)
 python scripts/fly_mission.py
 
-# Run tests
-pytest tests/
-```
+# Run unit tests (no SITL needed)
+pytest tests/ -k "not sitl"
 
-macOS Apple Silicon. Python 3.11. Editor: Neovim.
+# Run integration test (SITL must be running)
+pytest tests/test_navigator_sitl.py
+```
 
 ---
 
