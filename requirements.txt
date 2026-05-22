@@ -1,0 +1,13 @@
+# Autonomous Drone Navigation — Phase 1
+# Python 3.11+
+# Install: pip install -r requirements.txt
+
+# Flight controller communication
+pymavlink==2.4.41
+dronekit==2.9.2
+
+# Numerics / occupancy map
+numpy==1.26.4
+
+# Testing
+pytest==8.2.0
